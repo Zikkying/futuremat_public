@@ -2,6 +2,7 @@ import warnings
 import logging
 import math
 import numpy as np
+import os
 
 from pymatgen.core.structure import IStructure as pymatstructure
 import settings
@@ -324,17 +325,20 @@ class VaspReader(FileReader):
                     l += 1
         return potential_grid, crystal
 
-class VaspWriter(object):
 
+class VaspWriter(object):
+    def __int__(self, output_location=None):
+        super(self.__class__, self).__init__(output_location=os.getcwd(),
+                                             )
     def write_INCAR(self, filename='INCAR',
                     default_options=default_ionic_optimisation_set,
                     **kwargs):
         default_options.update(kwargs)
 
-        #do not overwrite existing INCAR option
-        #import os
-        #if os.path.isfile('./INCAR') and (os.path.getsize("./INCAR") != 0):
-        #-    return
+        # do not overwrite existing INCAR option
+        # import os
+        # if os.path.isfile('./INCAR') and (os.path.getsize("./INCAR") != 0):
+        # -    return
 
         incar = open(filename, 'w')
         try:
@@ -568,12 +572,12 @@ if __name__ == "__main__":
         convert_xml_to_pickle()
 
     if args.f:
-        import os
+
         assert ('XDATCAR' in args.input)
         frames = VaspReader(input_location=args.input).read_XDATCAR()
-        pwd=os.getcwd()
-        for i,frame in enumerate(frames):
-            folder_name='frame_'+str(str(i).zfill(len(str(len(frames)))))
+        pwd = os.getcwd()
+        for i, frame in enumerate(frames):
+            folder_name = 'frame_' + str(str(i).zfill(len(str(len(frames)))))
             if not os.path.exists(folder_name):
                 os.makedirs(folder_name)
             os.chdir(folder_name)
