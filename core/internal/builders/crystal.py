@@ -11,7 +11,6 @@ from core.models.atom import Atom
 from core.models.element import element_name_dict
 from core.models.vector3d import cVector3D
 from core.resources.crystallographic_space_groups import CrystallographicSpaceGroups
-
 import copy
 import numpy as np
 
@@ -168,37 +167,48 @@ def map_to_pymatgen_Structure(crystal):
 
 
 class SubstitutionalSolidSolutionBuilder(object):
+    '''
+    supercell :input type: Object Structure/IStrcuture from Python
+    '''
 
-    def __init__(self, primitive_cell, supercell_size=[1, 1, 1], atom_to_substitute='H', atom_substitute_to='F',
+    def __init__(self, primitive_cell, supercell_size=[1, 1, 1], atom_gone='H', atom_into='F',
                  number_of_substitutions=1, write_vasp=False, prefix=None, throttle=5, max_structures=None):
         self.primitive_cell = map_to_pymatgen_Structure(primitive_cell)
         self.primitive_cell.make_supercell(supercell_size)
         self.sc_size = supercell_size
         self.supercells = [self.primitive_cell]
-        self.atom_to_substitute = atom_to_substitute
-        self.atom_substitute_to = atom_substitute_to
+        self.atom_gone = atom_gone
+        self.atom_into = atom_into
         self.number_of_substitutions = number_of_substitutions
         self.write_vasp = write_vasp
         self.prefix = prefix
         self.substituted_sites = None
         self.throttle = throttle
-        self.max_structures = max_structures #retain up to this number of structures in each run
+        self.max_structures = max_structures  # retain up to this number of structures in each run
 
-    def make_one_substitution(self, supercell):
+    def make_one_substitution(self, supercell) -> list:
+        """
+        :param supercell: IStructure/Structure object from Pymatgen
+        :type supercell: object
+        :return: List of substituted_structures
+        """
+        from decimal import Decimal
         sga = SpacegroupAnalyzer(supercell)
         symm_structure = sga.get_symmetrized_structure()
         substitution_site_coords = []
 
         for equiv_site in list(symm_structure.equivalent_sites):
-            if self.atom_to_substitute == equiv_site[0].species.__str__().replace('1', ''):
+            if self.atom_gone == equiv_site[0].species.__str__().replace('1', ''):
                 substitution_site_coords.append(equiv_site[0].coords)
 
         substituted_structures = [copy.deepcopy(supercell) for _ in substitution_site_coords]
 
         for i, struct in enumerate(substituted_structures):
             for no, site in enumerate(struct.__dict__['_sites']):
-                if np.array_equal(site.__dict__['_coords'], substitution_site_coords[i]):
-                    site.__dict__["_species"] = Composition(self.atom_substitute_to)
+                if np.array_equal(site.coords, substitution_site_coords[i]):
+                    site.__dict__["_species"] = Composition(self.atom_into)
+                else:
+                    pass
 
         return substituted_structures
 
@@ -210,6 +220,7 @@ class SubstitutionalSolidSolutionBuilder(object):
 
         os.chdir(cwd + '/' + dir_name)
         from pymatgen.io.vasp import Poscar
+        from futuremat_public.core.dao import vasp
         Poscar(supercell.get_sorted_structure()).write_file('POSCAR')
         os.chdir(cwd)
 
@@ -226,7 +237,7 @@ class SubstitutionalSolidSolutionBuilder(object):
                     for extra_doped_supercell in self.make_one_substitution(supercell):
                         self.supercells.append(extra_doped_supercell)
 
-                        #if self.write_vasp:
+                        # if self.write_vasp:
                         #    dir_name = "SC_" + str(self.sc_size[0]) + "_" + str(self.sc_size[1]) + "_" + str(
                         #        self.sc_size[2]) + '_' + self.prefix + '_' + str(substituted_count + 1) + "_str_" + str(
                         #        len(self.supercells))
@@ -250,7 +261,7 @@ class SubstitutionalSolidSolutionBuilder(object):
                     for s in extra_doped_supercells:
                         __site_no = []
                         for no, site in enumerate(s.__dict__['_sites']):
-                            if site.__dict__["_species"] == Composition(self.atom_substitute_to):
+                            if site.__dict__["_species"] == Composition(self.atom_into):
                                 __site_no.append(no)
                         __site_no = list(sorted(__site_no))
                         if __site_no not in doped_sites:
@@ -259,9 +270,9 @@ class SubstitutionalSolidSolutionBuilder(object):
                     print(len(self.supercells))
 
             if self.max_structures is not None:
-                if len(self.supercells)>self.max_structures:
+                if len(self.supercells) > self.max_structures:
                     import random
-                    self.supercells=random.sample(self.supercells,self.max_structures)
+                    self.supercells = random.sample(self.supercells, self.max_structures)
 
             if self.write_vasp:
                 for i, cell in enumerate(self.supercells):
@@ -274,12 +285,12 @@ class SubstitutionalSolidSolutionBuilder(object):
 
             substituted_count += 1
 
-        #self.supercells = [map_pymatgen_IStructure_to_crystal(s) for s in self.supercells]
+        # self.supercells = [map_pymatgen_IStructure_to_crystal(s) for s in self.supercells]
 
         return self.supercells
 
 
-def deform_crystal_by_lattice_expansion_coefficients(crystal, def_fraction=[0.0,0.0,0.0]):
+def deform_crystal_by_lattice_expansion_coefficients(crystal, def_fraction=[0.0, 0.0, 0.0]):
     _new_asym_unit = []
     for mol in crystal.asymmetric_unit:
         _new_atoms = [Atom(label=atom.label, scaled_position=atom.scaled_position) for atom in mol.atoms]
