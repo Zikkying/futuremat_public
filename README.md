@@ -14,6 +14,6 @@ A public available version of furturemat code that contains core functionalities
     ```bash
     export PYTHONPATH="<work_dir>/futuremat_public"
     
-    echo $PYTHONPATH
+    echo $PYTHONPATH # double check the PATH
     ```
 

@@ -327,9 +327,7 @@ class VaspReader(FileReader):
 
 
 class VaspWriter(object):
-    def __int__(self, output_location=None):
-        super(self.__class__, self).__init__(output_location=os.getcwd(),
-                                             )
+
     def write_INCAR(self, filename='INCAR',
                     default_options=default_ionic_optimisation_set,
                     **kwargs):

@@ -1,4 +1,4 @@
-from pymatgen.core import Composition
+from pymatgen.core.composition import Composition
 from pymatgen.alchemy.filters import RemoveDuplicatesFilter
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.core.structure import Structure
@@ -169,10 +169,11 @@ def map_to_pymatgen_Structure(crystal):
 class SubstitutionalSolidSolutionBuilder(object):
     '''
     supercell :input type: Object Structure/IStrcuture from Python
+    prefix :
     '''
 
     def __init__(self, primitive_cell, supercell_size=[1, 1, 1], atom_gone='H', atom_into='F',
-                 number_of_substitutions=1, write_vasp=False, prefix=None, throttle=5, max_structures=None):
+                 number_of_substitutions=1, write_vasp=False, prefix='', throttle=5, max_structures=None):
         self.primitive_cell = map_to_pymatgen_Structure(primitive_cell)
         self.primitive_cell.make_supercell(supercell_size)
         self.sc_size = supercell_size
@@ -188,8 +189,8 @@ class SubstitutionalSolidSolutionBuilder(object):
 
     def make_one_substitution(self, supercell) -> list:
         """
-        :param supercell: IStructure/Structure object from Pymatgen
-        :type supercell: object
+        :param supercell: The supercell that you want to modify
+        :type supercell: IStructure/Structure object
         :return: List of substituted_structures
         """
         from decimal import Decimal
@@ -205,7 +206,7 @@ class SubstitutionalSolidSolutionBuilder(object):
 
         for i, struct in enumerate(substituted_structures):
             for no, site in enumerate(struct.__dict__['_sites']):
-                if np.array_equal(site.coords, substitution_site_coords[i]):
+                if np.array_equal(site.coords,substitution_site_coords[i]):
                     site.__dict__["_species"] = Composition(self.atom_into)
                 else:
                     pass
