@@ -1,4 +1,4 @@
-# futuremat_public
+# Futuremat_public
 A public available version of furturemat code that contains core functionalities developed in our lab.
 
 # Get starting with  futuremat_public
@@ -21,11 +21,11 @@ A public available version of furturemat code that contains core functionalities
 
 # set up POTCAR directory
 
-For pymatgen
+For **pymatgen**
 
     pmg config -p <UR/VASP/POTCAR> <Your dir for POTCAR>
 
-For futuremat_public
+For **futuremat_public**
 
 Edit in settings.py
     
