@@ -193,7 +193,6 @@ class SubstitutionalSolidSolutionBuilder(object):
         :type supercell: IStructure/Structure object
         :return: List of substituted_structures
         """
-        from decimal import Decimal
         sga = SpacegroupAnalyzer(supercell)
         symm_structure = sga.get_symmetrized_structure()
         substitution_site_coords = []
